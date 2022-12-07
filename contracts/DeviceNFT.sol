@@ -47,6 +47,15 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
 
     // token owner => (operator address => bool)
     mapping(address => mapping(address => bool)) internal tokenOwnerToOperators;
+
+    // child's TokenId => address of child contract
+    mapping (uint256 => address) internal childContracts;
+
+    // Parent tokenId => (child contract address => array of children tokens)
+    mapping (uint256 => mapping (address => uint256 [])) childTokens;
+
+    //mapping childContractsIndex
+    mapping(uint256 => mapping(address => mapping(uint256 => uint256))) private childTokenIndex;
     
 
     function mint(address _to) public returns (uint256) {
@@ -56,5 +65,59 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
         OwnerToTokenCount[_to]++;
         return tokenCount_;
     }
+
+    // This smart contract has to be approved in the spare parts contract
+    function getChild(address _from, uint256 _tokenId, address _childContract, uint256 _childTokenId) external {
+        attachChild(_from, _tokenId, _childContract, _childTokenId);
+        require(_from == msg.sender ||
+        ERC721(_childContract).isApprovedForAll(_from, msg.sender) ||
+        ERC721(_childContract).getApproved(_childTokenId) == msg.sender);
+        ERC721(_childContract).transferFrom(_from, address(this), _childTokenId);
+
+    }
+
+
+    // TODO: Modify so that a certificate NFT cannot be transferred
+    function safeTransferChild(uint256 _fromTokenId, address _to, address _childContract, uint256 _childTokenId) external {
+        uint256 tokenId = childTokenOwner[_childContract][_childTokenId];
+        require(tokenId > 0 || childTokenIndex[tokenId][_childContract][_childTokenId] > 0);
+        require(tokenId == _fromTokenId);
+        require(_to != address(0));
+        address rootOwner = address(rootOwnerOf(tokenId));
+        require(rootOwner == msg.sender || tokenOwnerToOperators[rootOwner][msg.sender] ||
+        rootOwnerAndTokenIdToApprovedAddress[rootOwner][tokenId] == msg.sender);
+        removeChild(tokenId, _childContract, _childTokenId);
+        ERC721(_childContract).safeTransferFrom(this, _to, _childTokenId);
+        emit TransferChild(tokenId, _to, _childContract, _childTokenId);
+    }
+
+    function mintParentWithChild (){}
+
+    function mintParent () {}
+
+    function attachChild(address _from, uint256 _tokenId, address _childContract, uint256 _childTokenId) private{
+        // check if parent NFT exists
+        require(tokenIdToOwner[_tokenId] != address(0), "_tokenId does not exist.");
+
+        // Check if child token had already been attached
+        require(childTokenIndex[_tokenId][_childContract][_childTokenId] == 0, "Cannot receive child token because it has already been received.");
+
+        //Check if the smart contract of the child NFT had been stored
+        uint256 childTokensLength = childTokens[_tokenId][_childContract].length;
+        if (childTokensLength == 0) {
+            childContractIndex[_tokenId][_childContract] = childContracts[_tokenId].length;
+            childContracts[_tokenId].push(_childContract);
+        }
+        childTokens[_tokenId][_childContract].push(_childTokenId);
+        childTokenIndex[_tokenId][_childContract][_childTokenId] = childTokensLength + 1;
+        childTokenOwner[_childContract][_childTokenId] = _tokenId;
+        emit ReceivedChild(_from, _tokenId, _childContract, _childTokenId);
+    }
+
+    function attachChildren (){}
+
+    function transferChild() {}
+
+    function removeChild () {}
 
 }
