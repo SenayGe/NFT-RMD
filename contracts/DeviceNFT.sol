@@ -134,4 +134,17 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
 
     function removeChild () {}
 
+    //TOREVIEW
+    function ownerOf(uint256 _tokenId) public view returns (address tokenOwner) {
+        tokenOwner = tokenIdToTokenOwner[_tokenId];
+        require(tokenOwner != address(0));
+        return tokenOwner;
+    }
+    function approve(address _approved, uint256 _tokenId) external {
+        address rootOwner = address(rootOwnerOf(_tokenId));
+        require(rootOwner == msg.sender || tokenOwnerToOperators[rootOwner][msg.sender]);
+        rootOwnerAndTokenIdToApprovedAddress[rootOwner][_tokenId] = _approved;
+        emit Approval(rootOwner, _approved, _tokenId);
+    }
+
 }
