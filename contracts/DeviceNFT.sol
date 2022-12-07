@@ -57,6 +57,7 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
     //mapping childContractsIndex
     mapping(uint256 => mapping(address => mapping(uint256 => uint256))) private childTokenIndex;
     
+    bytes4 constant ERC721_RECEIVED = 0x150b7a02;
 
     function mint(address _to) public returns (uint256) {
         tokenCount++;
@@ -112,6 +113,19 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
         childTokenIndex[_tokenId][_childContract][_childTokenId] = childTokensLength + 1;
         childTokenOwner[_childContract][_childTokenId] = _tokenId;
         emit ReceivedChild(_from, _tokenId, _childContract, _childTokenId);
+    }
+
+    function onERC721Received(address _from, uint256 _childTokenId, bytes _data) external returns (bytes4) {
+        require(_data.length > 0, "_data must contain the uint256 tokenId to transfer the child token to.");
+        // convert up to 32 bytes of_data to uint256, owner nft tokenId passed as uint in bytes
+        uint256 tokenId;
+        assembly {tokenId := calldataload(132)}
+        if (_data.length < 32) {
+            tokenId = tokenId >> 256 - _data.length * 8;
+        }
+        attachChild(_from, tokenId, msg.sender, _childTokenId);
+        require(ERC721(msg.sender).ownerOf(_childTokenId) != address(0), "Child token not owned.");
+        return ERC721_RECEIVED;
     }
 
     function attachChildren (){}
