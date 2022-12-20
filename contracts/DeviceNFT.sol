@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+// import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
@@ -30,7 +30,7 @@ contract DeviceFactory {
 
 }
 
-contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Reveiver
+contract DeviceNFT is ERC721, ERC721URIStorage, IERC721Receiver { // IERC721Enumerable, IERC721Reveiver
 
     
     ERC721 public sparePartContract;
@@ -57,6 +57,7 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
     //mapping childContractsIndex
     mapping(uint256 => mapping(address => mapping(uint256 => uint256))) private childTokenIndex;
     
+
     bytes4 constant ERC721_RECEIVED = 0x150b7a02;
 
     function mint(address _to) public returns (uint256) {
@@ -92,9 +93,22 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
         emit TransferChild(tokenId, _to, _childContract, _childTokenId);
     }
 
-    function mintParentWithChild (){}
+    function mintParent (address _to, string calldata _metadata ){
+        
+        // require {
+        //     accessControls.hasMinterRole(_msgSender()),
+        //     "DeviceNFT.mint: Sender must have minter role"
+        // }
+        tokenCount++;
+        uint256 tokenId = tokenCount;
+        _safeMint(_to, tokenId);
+        _setTokenURI(tokenId, _metadata);
+        tokenIdToOwner[tokenId] = _to;
+        OwnerToTokenCount[_to]++;
+        return tokenId;
+    }
 
-    function mintParent () {}
+    function mintParentWithChild () {}
 
     function attachChild(address _from, uint256 _tokenId, address _childContract, uint256 _childTokenId) private{
         // check if parent NFT exists
@@ -115,15 +129,18 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
         emit ReceivedChild(_from, _tokenId, _childContract, _childTokenId);
     }
 
-    function onERC721Received(address _from, uint256 _childTokenId, bytes _data) external returns (bytes4) {
+     function onERC721Received(address _operator, address _from, uint256 _childTokenId, bytes _data) external returns (bytes4) {
+         
         require(_data.length > 0, "_data must contain the uint256 tokenId to transfer the child token to.");
         // convert up to 32 bytes of_data to uint256, owner nft tokenId passed as uint in bytes
-        uint256 tokenId;
-        assembly {tokenId := calldataload(132)}
-        if (_data.length < 32) {
-            tokenId = tokenId >> 256 - _data.length * 8;
-        }
-        attachChild(_from, tokenId, msg.sender, _childTokenId);
+        uint256 _parentTokenId = _extractReceivedTokenId();
+        // assembly {tokenId := calldataload(132)}
+        // if (_data.length < 32) {
+        //     tokenId = tokenId >> 256 - _data.length * 8;
+        // }
+
+        require (_exists (_parentTokenId), "");
+        attachChild(_from, _parentTokenId, msg.sender, _childTokenId);
         require(ERC721(msg.sender).ownerOf(_childTokenId) != address(0), "Child token not owned.");
         return ERC721_RECEIVED;
     }
@@ -134,7 +151,16 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
 
     function removeChild () {}
 
-    //TOREVIEW
+    function _extractReceivedTokenId() internal pure returns (uint256) {
+        // Extract out the embedded token ID from the sender
+        uint256 _receiverTokenId;
+        uint256 _index = msg.data.length - 32;
+        assembly {_receiverTokenId := calldataload(_index)}
+        return _receiverTokenId;
+    }
+
+
+    // TO-REVIEW
     function ownerOf(uint256 _tokenId) public view returns (address tokenOwner) {
         tokenOwner = tokenIdToTokenOwner[_tokenId];
         require(tokenOwner != address(0));
@@ -146,5 +172,6 @@ contract DeviceNFT is ERC721, ERC721URIStorage { // IERC721Enumerable, IERC721Re
         rootOwnerAndTokenIdToApprovedAddress[rootOwner][_tokenId] = _approved;
         emit Approval(rootOwner, _approved, _tokenId);
     }
+
 
 }
