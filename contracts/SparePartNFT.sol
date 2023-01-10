@@ -18,6 +18,10 @@ contract SparePartNFT is ERC721, ERC721URIStorage {
     constructor() ERC721("SPToken", "SPT") {}
 
     event ReplacementPartNFTMinted(uint256 indexed _tokenId, address _owner, string _tokenURI);
+    
+
+
+
     event Retval (bytes4 retval);
     event TokenTransferedToParentNFT (uint256 _childTokenId, address _parentContract, bytes _encodedData);
 

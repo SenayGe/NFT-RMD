@@ -53,10 +53,7 @@ contract CertificatetNFT is ERC721, ERC721URIStorage {
         }
 
     }
-    function _beforeTokenTransfer(address from, address to, uint256, uint256 batchSize) internal virtual override(ERC721) {
-        require (from == address(0) || to == address (0),    "You cannot transfer this token");
-    }
-
+    function _beforeTokenTransfer(address from, address to, uint256, uint256 batchSize) internal virtual override(ERC721) { require (from == address(0) || to == address (0),    "You cannot transfer this token"); }
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
@@ -71,6 +68,8 @@ contract CertificatetNFT is ERC721, ERC721URIStorage {
     }
 
     function isContract(address _addr) internal view returns (bool) {
+        
+        uint256 size;
         uint256 size;
         assembly {size := extcodesize(_addr)}
         return size > 0;
