@@ -6,3 +6,18 @@ The repositioning of refurbished devices into the market, however, is accompanie
 
 
 <img src="https://raw.githubusercontent.com/SenayGe/NFT-RMD/main/diagrams/system-model-v3.png" width=70% height=70% >
+
+## Citation
+
+If you use `NFT-RMD` in you research, I would appreciate the citation!
+```bibtex
+@ARTICLE{NFT-RMD,
+  author={Gebreab, Senay A. and Salah, Khaled and Jayaraman, Raja and Zemerly, Jamal},
+  journal={IEEE Access}, 
+  title={Trusted Traceability and Certification of Refurbished Medical Devices Using Dynamic Composable NFTs}, 
+  year={2023},
+  volume={11},
+  number={},
+  pages={30373-30389},
+  doi={10.1109/ACCESS.2023.3261555}}
+```
