@@ -1,6 +1,7 @@
 # NFT Refurbished Medical Devices
 
 This repository contains the implementation code to the paper titled "Trusted Traceability and Certification of Refurbished Medical Devices Using Dynamic Composable NFTs".
+
 Paper :page_with_curl:: [here](https://ieeexplore.ieee.org/document/10080959)
 
 ## Abstract
